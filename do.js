@@ -2,7 +2,7 @@
 
 "use strict";
 
-var do = {};
+var d0 = {};
 
 //TODO: write all, merge with ivarize, comment each function and document it
 
@@ -52,16 +52,89 @@ if (!Array.prototype.max) {
     };
 }
 
-/*==== MISC ====*/
+/*==== UTILS ====*/
 
-do.setCookie = function(cname, cvalue, exdays) {
+//Thanks to perfectionkills.com <http://perfectionkills.com/instanceof-considered-harmful-or-how-to-write-a-robust-isarray/>
+d0.getClass = function(val) {
+	return Object.prototype.toString.call(val)
+		.match(/^\[object\s(.*)\]$/)[1];
+};
+
+d0.whatis = function(val) {
+
+	if (val === undefined)
+		return 'undefined';
+	if (val === null)
+		return 'null';
+
+	var type = typeof val;
+
+	if (type === 'object')
+		type = d0.getClass(val).toLowerCase();
+
+	if (type === 'number') {
+		if (val.toString().indexOf('.') > 0)
+			return 'float';
+		else
+			return 'integer';
+	}
+
+	return type;
+};
+
+d0.types = {
+	'undefined': -1,
+	'null': 0,
+	'boolean': 1,
+	'integer': 2,
+	'float': 3,
+	'string': 4,
+	'array': 5,
+	'object': 6,
+	'function': 7,
+	'regexp': 8,
+	'date': 9
+}
+
+d0.clone = function(o) {
+	var res = null;
+	var type = d0.types[d0.whatis(o)];
+	if(type === 6) {
+		res = d0._cloneObject(o);
+    } else if(type === 5) {
+    	res = d0._cloneArray(o);
+    } else {
+    	res = o;
+    }
+    return res;
+};
+
+d0._cloneObject = function(o) {
+	var res = {};
+	for(var i in o) {
+		res[i] = d0.clone(o[i]);
+	}
+	return res;
+};
+
+d0._cloneArray = function(a) {
+	var res = [];
+	for(var i = 0; i < a.length; i++) {
+		res[i] = d0.clone(a[i]);
+	}
+	return res;
+};
+
+/*==== BROWSER ====*/
+
+d0.setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
   var expires = "expires="+ d.toUTCString();
   document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
 
-do.getCookie = function(cname) {
+d0.getCookie = function(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
     var ca = decodedCookie.split(';');
@@ -77,20 +150,20 @@ do.getCookie = function(cname) {
     return "";
 }
 
-do.eraseCookie = function(name) {
+d0.eraseCookie = function(name) {
     do.setCookie(name, "", null , null , null, 1);
 }
 
-do.getUrlParameter = function(name) {
+d0.getUrlParameter = function(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     var results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 };
 
-do.getHash = function() {
+d0.getHash = function() {
     var hash = window.location.hash;
-	
+
     if (hash) {
         var hash_value = hash.replace('#', '');
         if (hash_value === '') {
@@ -102,15 +175,21 @@ do.getHash = function() {
     return null;
 }
 
+d0.isIOS = function() {
+	//https://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
+	return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
 /*==== STRINGS ====*/
 
-do.slug = function(s) {
+d0.slug = function(s) {
 	s = s.trim().toLowerCase();
+	s = s.replace(/[\/\\]/ig, '-');
 	s = s.replace(/[^a-z0-9\s_-]/ig, '');
 	return s.replace(/[\s\uFEFF\xA0]+/ig, '-');
 }
 
-do.decorateWithZeros = function(v, z) {
+d0.decorateWithZeros = function(v, z) {
     var zeros = '';
     var zorig = z;
 
